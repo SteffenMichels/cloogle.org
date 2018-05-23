@@ -33,9 +33,9 @@ RUN apt-get update -qq && apt-get install -qq subversion ca-certificates git jq\
 	&& apt-get autoremove -qq
 
 COPY frontend/index_common_problems.py .
-RUN apt-get update -qq && apt-get install python3.5 -qq ca-certificates git\
+RUN apt-get update -qq && apt-get install -qq python3 ca-certificates git\
 	&& ./index_common_problems.py\
-	&& apt-get remove -qq ca-certificates git\
+	&& apt-get remove -qq python3 ca-certificates git\
 	&& apt-get autoremove -qq
 
 COPY frontend/iconv.sh .
