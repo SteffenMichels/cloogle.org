@@ -32,13 +32,8 @@ RUN apt-get update -qq && apt-get install -qq subversion ca-certificates git jq\
 	&& apt-get remove -qq subversion ca-certificates git jq\
 	&& apt-get autoremove -qq
 
-# Pygments, for highlighting
-RUN apt-get update -qq \
-	&& apt-get install -qq python3.5 python3-pip \
-	&& pip3 install pygments pygments-lexer-clean
-
 COPY frontend/index_common_problems.py .
-RUN apt-get update -qq && apt-get install -qq ca-certificates git\
+RUN apt-get update -qq && apt-get install python3.5 -qq ca-certificates git\
 	&& ./index_common_problems.py\
 	&& apt-get remove -qq ca-certificates git\
 	&& apt-get autoremove -qq

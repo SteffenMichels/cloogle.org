@@ -21,6 +21,10 @@ td, th {
 	padding-right: 1em;
 }
 
+a.hidden {
+	text-decoration: none;
+}
+
 .banner {
 	background-color: #d7e3f4;
 	border-color: #87aade;
