@@ -154,11 +154,11 @@ String.prototype.markup = function() {
 	var in_code = false;
 
 	var s = this
-		.replace(/\n```[^\n]*(?:\n|$)/g, function (m) {
+		.replace(/(?:^|\n)```([^\n]*)(?:\n|$)/g, function (m, type) {
 			in_code = !in_code;
-			return in_code ? '<pre>' : '</pre>';
+			return in_code ? '<pre class="' + type + '">' : '</pre>';
 		})
-		.replace(/<pre>([\s\S]*?)<\/pre>/g, function (m,c) {
+		.replace(/<pre class="clean">([\s\S]*?)<\/pre>/g, function (m,c) {
 			return '<pre>' + highlightClean(c, highlightCallback) + '</pre>';
 		})
 		.split(/\n\n/).join('<br class="parbreak"/>')
@@ -194,9 +194,12 @@ function makeLocationUrl(loc) {
 	if (loc[4].length > 1)
 		iclUrl += ';line=' + loc[4][1];
 
-	return loc[1] +
-		' (<a target="_blank" href="' + dclUrl + '">dcl' +
-			(loc[3].length > 1 ? ':' + loc[3][1] : '') + '</a>; ' +
+	var dclLink = '<a target="_blank" href="' + dclUrl + '">dcl' +
+			(loc[3].length > 1 ? ':' + loc[3][1] : '') + '</a>; ';
+	if (loc[3] == ['Nothing'])
+		dclLink = '';
+
+	return loc[1] + ' (' + dclLink +
 		'<a target="_blank" href="' + iclUrl + '">icl' +
 			(loc[4].length > 1 ? ':' + loc[4][1] : '') + '</a>) ' +
 		'(' + loc[0] + ')';
@@ -241,15 +244,10 @@ function makeRequiredContext(context) {
 }
 
 function highlightExample(example) {
-	var f = 'highlight' + example.cleanjs_type;
-	if (!(f in window)) {
-		return example.example;
-	} else if ('cleanjs_start' in example) {
-		return window[f](
-				example.example, highlightCallback, example.cleanjs_start);
+	if ('cleanjs_start' in example) {
+		return highlightClean(example.example, highlightCallback, example.cleanjs_start);
 	} else {
-		return window[f](
-				example.example, highlightCallback);
+		return highlightClean(example.example, highlightCallback);
 	}
 }
 
@@ -384,10 +382,12 @@ function getResults(str, libs, include_builtins, include_core, include_apps, pag
 		var dclUrl = 'src#' + encodeURIComponent(basic['library'] + '/' + basic['filename'].replace('.icl', ''));
 		var iclUrl = dclUrl + ';icl';
 		var dclLine = '';
+		var dclLink = '';
 		var iclLine = '';
 		if ('dcl_line' in basic) {
 			dclUrl += ';line=' + basic['dcl_line'];
 			dclLine = ':' + basic['dcl_line'];
+			dclLink = '<a href="' + dclUrl + '" target="_blank">dcl' + dclLine + '</a>; ';
 		}
 		if ('icl_line' in basic) {
 			iclUrl += ';line=' + basic['icl_line'];
@@ -395,8 +395,7 @@ function getResults(str, libs, include_builtins, include_core, include_apps, pag
 		}
 
 		var basicText = basic['library'] + ': ' +
-				basic['modul'] + ' (' +
-				'<a href="' + dclUrl + '" target="_blank">dcl' + dclLine + '</a>; ' +
+				basic['modul'] + ' (' + dclLink +
 				'<a href="' + iclUrl + '" target="_blank">icl' + iclLine + '</a>) ' +
 				'<a class="usages-link" href="#using ' + basic['name'] + '" title="Find where this is used">usages &rarr;</a>';
 
@@ -613,8 +612,10 @@ function getResults(str, libs, include_builtins, include_core, include_apps, pag
 							'This is a core module and should usually only be used internally.' +
 							'</span>']);
 
+				var definition = 'dcl_line' in basic ? 'definition ' : '';
+
 				return makeGenericResultHTML(basic, meta, hidden,
-						highlightClean('definition module ' + basic['modul'], highlightCallback));
+						highlightClean(definition + 'module ' + basic['modul'], highlightCallback));
 
 			case 'SyntaxResult':
 				var toggler = '';
@@ -672,11 +673,12 @@ function getResults(str, libs, include_builtins, include_core, include_apps, pag
 				res.className = 'result';
 				res.innerHTML =
 						'<div class="result-basic">Common problem: ' + result.problem_title + '</div>' +
-						'<div class="result-extra">' +
-							result.problem_description +
+						'<div class="result-extra result-extra-space">' +
+							result.problem_description.markup() +
 							'<br class="parbreak"/>Possible solutions:<ul>' + solutions + '</ul>' +
 							'Examples:<ul>' + examples + '</ul>' +
 							'<a href="https://github.com/clean-cloogle/common-problems/blob/master/' + result.problem_key + '.md" target="_blank">Edit this explanation on GitHub.</a>' +
+							'<span class="problem-license">This text is licensed under <a href="https://github.com/clean-cloogle/common-problems/blob/master/LICENSE" target="_blank">CC-BY-SA-4.0</a>.</span>' +
 						'</div>' +
 						'<div class="result-code"></div>';
 				return res;

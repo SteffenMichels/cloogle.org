@@ -32,9 +32,14 @@ RUN apt-get update -qq && apt-get install -qq subversion ca-certificates git jq\
 	&& apt-get remove -qq subversion ca-certificates git jq\
 	&& apt-get autoremove -qq
 
-COPY frontend/index_common_problems.py .
+# Build common problems index
 RUN apt-get update -qq && apt-get install -qq python3 ca-certificates git\
-	&& ./index_common_problems.py\
+	&& git clone https://github.com/clean-cloogle/common-problems /tmp/common-problems\
+	&& cd /tmp/common-problems\
+	&& ./build_index.py\
+	&& mv common-problems.json /var\
+	&& cd /\
+	&& rm -fr /tmp/common-problems\
 	&& apt-get remove -qq python3 ca-certificates git\
 	&& apt-get autoremove -qq
 
